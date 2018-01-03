@@ -25,7 +25,7 @@ SECRET_KEY = '98ailjg2*ar-$f&p*n4i_9iz8f&bw)*%bn$j%#ck64s56v&39q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['172.20.10.11', '127.0.0.1']
 
 # Application definition
 
@@ -51,7 +51,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'rbpi.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -70,7 +69,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rbpi.wsgi.application'
 
-
+AUTHENTICATION_BACKENDS = ('core.backend.SettingsBackend',)
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -123,3 +122,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]

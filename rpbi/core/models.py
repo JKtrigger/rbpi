@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
+from django.utils.translation import ugettext_lazy as _
 
 
 class BaseHistoryModel(models.Model):
@@ -13,7 +14,7 @@ class BaseHistoryModel(models.Model):
     ON_ACTIVE, ON_DELETED, ON_MODIFY, ON_REPAIR = xrange(0, 4)
     STATUSES = (
         (ON_ACTIVE, "ON_ACTIVE"),
-        (ON_DELETED, "ON_DELETED,"),
+        (ON_DELETED, "ON_DELETED"),
         (ON_MODIFY, "ON_MODIFY"),
         (ON_REPAIR, "ON_REPAIR"),
     )
@@ -21,7 +22,9 @@ class BaseHistoryModel(models.Model):
     created = models.DateTimeField(verbose_name='created', auto_now=True)
     modified = models.DateTimeField(verbose_name='modified', auto_now_add=True)
     user_modifier = models.ForeignKey(
-        'core.BaseRBPIUser', verbose_name="modifier user")
+        'core.BaseRBPIUser', verbose_name="modifier user",
+        blank=True, null=True
+    )
     status_name = models.PositiveSmallIntegerField(
         choices=STATUSES, verbose_name='status', default=ON_ACTIVE)
 
@@ -38,11 +41,30 @@ class BaseUser(User):
         abstract = True
 
 
+class LaunchProvider(BaseUser):
+    """
+    Класс Поставщиков обедов
+    """
+    def __unicode__(self):
+        return u"{}".format(self.username)
+
+
 class Office(BaseHistoryModel):
     """
     Класс офисов
     """
-    name = models.CharField(verbose_name="Office", max_length=40)
+
+    name = models.CharField(verbose_name="office", max_length=40)
+    place = models.ForeignKey(
+        'LaunchProvider', verbose_name="provider",
+        related_name="provider", blank=True, null=True
+    )
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def __unicode__(self):
+        return self.name
 
 
 class LegalEntity(BaseHistoryModel):
@@ -50,20 +72,86 @@ class LegalEntity(BaseHistoryModel):
     Класс Юридических лиц
     """
     name_of_legal = models.CharField(verbose_name="Legal Name", max_length=40)
-    offices = models.ForeignKey('Office', verbose_name="Offices")
+    offices = models.ManyToManyField(
+        'Office', verbose_name="Offices", related_name="offices", blank=True)
+
+    def __str__(self):
+        return self.__unicode__()
+
+    def __unicode__(self):
+        WORD_ENDING_OV = 0, 5, 6, 7, 8, 9
+        WORD_ENDING_ = 1,
+        WORD_ENDING_A = 2, 3, 4
+
+        count_offices = self.offices.count()
+
+        if count_offices % 10 in WORD_ENDING_OV:
+            word = u"офисов"
+        if count_offices % 10 in WORD_ENDING_:
+            word = u"офис"
+        if count_offices % 10 in WORD_ENDING_A:
+            word = u"офиса"
+        return u"{} = > {} {}".format(
+            self.name_of_legal, count_offices, word)
 
 
 class BaseRBPIUser(BaseUser):
     """
     Базовывй пользователь RBPI
+
+    Разделяет HR и остальных пользователей
     """
     is_admin = models.BooleanField(
         verbose_name='is admin',
-        default=False)
+        default=False,
+        help_text=_(u"Это отдел кадров ?")
+    )
     is_group = models.BooleanField(
         verbose_name='is group',
-        default=False)
-    legal_entity = models.ForeignKey('LegalEntity')
+        default=False,
+        help_text=_(u"Это группа лиц ?")
+    )
+    legal_entity = models.ForeignKey('LegalEntity', blank=True, null=True)
+
+    def add_perm(self, *args, **kwargs):
+        self.user_permissions = [
+            # Значения по умолчанию
+            Permission.objects.get(codename='add_order'),
+            Permission.objects.get(codename='change_order'),
+            # Permission.objects.get(codename='delete_order')
+        ]
+
+        if self.is_admin:
+            self.is_staff = True
+            self.is_active = True
+            self.user_permissions.add(
+                # todo : Переписать
+                Permission.objects.get(codename='add_launchprovider'),
+                Permission.objects.get(codename='change_launchprovider'),
+                # Permission.objects.get(codename='delete_launchprovider'),
+
+                Permission.objects.get(codename='add_office'),
+                # Permission.objects.get(codename='delete_office'),
+                Permission.objects.get(codename='change_office'),
+
+                Permission.objects.get(codename='add_legalentity'),
+                # Permission.objects.get(codename='delete_legalentity'),
+                Permission.objects.get(codename='change_legalentity'),
+
+                Permission.objects.get(codename='add_messageshistory'),
+                # Permission.objects.get(codename='delete_messageshistory'),
+                Permission.objects.get(codename='change_messageshistory'),
+
+                Permission.objects.get(codename='add_baserbpiuser'),
+                # Permission.objects.get(codename='delete_baserbpiuser'),
+                Permission.objects.get(codename='change_baserbpiuser'),
+            )
+
+        super(BaseRBPIUser, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        super(BaseRBPIUser, self).save(*args, **kwargs)
+        self.add_perm()
 
     class Meta:
         permissions = (

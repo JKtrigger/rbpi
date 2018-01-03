@@ -1,0 +1,46 @@
+{% extends "core/base.html" %}
+
+{% block title %}Menu{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="jumbotron text-center">
+  <h1>{{topText}}</h1>
+  <p>{{topTextUnderText}}</p>
+  <img src="{% static '/img/rbpi.ico' %}" align="rbpi.icon"/>
+    {% autoescape off %}
+    <p>{{helloText}}</p>
+    {% endautoescape %}
+
+</div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-4">
+      <h3>Column 1</h3>
+      <p>Lorem {{ test }} dolor sit amet, consectetur adipisicing {{ username }} ..</p>
+      <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...</p>
+    </div>
+    <div class="col-sm-4">
+      <h3>Column 2</h3>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit...</p>
+      <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...</p>
+    </div>
+    <div class="col-sm-4">
+      <h3>Column 3</h3>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit...</p>
+      <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris...</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block end_content %}
+<style>
+    abbr {
+    border-bottom: 2px solid red; /* Пунктирное подчеркивание текста */
+    color: #000080; /* Темно-синий цвет текста */
+    text-decoration: none;
+   }
+</style>>
+{% endblock %}
