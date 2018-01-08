@@ -49,6 +49,26 @@ class LaunchProvider(BaseUser):
         return u"{}".format(self.username)
 
 
+class ActiveUserManager(models.Manager):
+    """Менеджер активных пользователей"""
+    def get_queryset(self):
+        return super(ActiveUserManager, self).get_queryset().filter(
+            is_active=True
+        )
+
+
+class ActiveLegalEntityManager(models.Manager):
+    """Менеджер активных Юр., лиц """
+    def get_queryset(self):
+        return super(ActiveLegalEntityManager, self).get_queryset().filter(
+            status_name=BaseHistoryModel.ON_ACTIVE
+        )
+
+
+class ActiveOffices(ActiveLegalEntityManager):
+    """Менеджер активных офисов"""
+
+
 class Office(BaseHistoryModel):
     """
     Класс офисов
@@ -59,6 +79,7 @@ class Office(BaseHistoryModel):
         'LaunchProvider', verbose_name="provider",
         related_name="provider", blank=True, null=True
     )
+    objects_active_offices = ActiveOffices()
 
     def __str__(self):
         return self.__unicode__()
@@ -75,6 +96,8 @@ class LegalEntity(BaseHistoryModel):
     offices = models.ManyToManyField(
         'Office', verbose_name="Offices", related_name="offices", blank=True)
 
+    objects_active_legal = ActiveLegalEntityManager()
+
     def __str__(self):
         return self.__unicode__()
 
@@ -84,13 +107,13 @@ class LegalEntity(BaseHistoryModel):
         WORD_ENDING_A = 2, 3, 4
 
         count_offices = self.offices.count()
-
+        word = u"офис{}"
         if count_offices % 10 in WORD_ENDING_OV:
-            word = u"офисов"
+            word = word.format("ов")
         if count_offices % 10 in WORD_ENDING_:
-            word = u"офис"
+            word = word.format('')
         if count_offices % 10 in WORD_ENDING_A:
-            word = u"офиса"
+            word = word.format("а")
         return u"{} = > {} {}".format(
             self.name_of_legal, count_offices, word)
 
@@ -101,6 +124,7 @@ class BaseRBPIUser(BaseUser):
 
     Разделяет HR и остальных пользователей
     """
+    objects_active_users = ActiveUserManager()
     is_admin = models.BooleanField(
         verbose_name='is admin',
         default=False,

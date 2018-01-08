@@ -16,10 +16,7 @@ class Order(BaseHistoryModel):
         BaseRBPIUser, verbose_name='user', related_name='customer',
         blank=True, null=True
     )
-    order_date = models.DateTimeField(verbose_name='created', auto_now=True)
-    is_active = models.BooleanField(
-        verbose_name="is active order", default=True
-    )
+    order_date = models.DateField()
     office = models.ForeignKey(Office, verbose_name='Office')
     first_course = models.PositiveSmallIntegerField(
         verbose_name='first_course', default=ZERO)

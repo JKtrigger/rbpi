@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Django settings for rpbi project.
 
@@ -25,8 +26,8 @@ SECRET_KEY = '98ailjg2*ar-$f&p*n4i_9iz8f&bw)*%bn$j%#ck64s56v&39q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['172.20.10.11', '127.0.0.1']
-
+ALLOWED_HOSTS = ['172.20.10.11', '127.0.0.1', '192.168.0.101']
+# TODO: Просолка полей с паролем всетаки нужна
 # Application definition
 
 INSTALLED_APPS = [
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    # Добавление tags в DTL
+    'core.templatetags',
     'menu',
 ]
 
