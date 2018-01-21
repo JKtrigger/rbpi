@@ -1,2 +1,7 @@
 Django==1.11.8
 pytz==2017.3
+PyYAML==3.12
+# http://www.rabbitmq.com/download.html
+# http://www.erlang.org/downloads
+amqp==2.2.2
+celery==3.1.25

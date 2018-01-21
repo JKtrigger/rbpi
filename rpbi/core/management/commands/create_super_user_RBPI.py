@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from django.core.management import CommandError, BaseCommand
+from django.core.management import BaseCommand
 
 from core.models import BaseRBPIUser
 

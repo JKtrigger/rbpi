@@ -40,3 +40,12 @@ class Order(BaseHistoryModel):
             self.office.name
         )
 
+
+class DisableDateOrder(models.Model):
+    """
+    Класс выкючения дат
+    """
+    disabled_date = models.DateField(_("Disabled date"))
+
+    def __unicode__(self):
+        return self.disabled_date.isoformat()

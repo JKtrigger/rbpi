@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
+    <link
+            rel="apple-touch-icon"
+            href="{% static '/img/apple-touch-icon.ico' %}"  type="image/x-icon"/>
+    <link rel="icon"
+          href="{% static '/img/apple-touch-icon.ico' %}"
+          type="image/x-icon"/>
 
     <!-- Latest compiled and minified CSS -->
     <link
@@ -28,13 +35,31 @@
             src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.7.2/bootstrap-slider.min.js">
 
     </script>
+    <script>
+
+
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>{% block title %} Menu {% endblock %}</title>
 </head>
 <body>
     {% block pre_content %}{% endblock %}
+    {% block jumbotron %}
+    <div class="jumbotron text-center">
+        <h1>{{topText}}</h1>
+        <p>{{topTextUnderText}}</p>
+        <img src="{% static '/img/rbpi.ico' %}" align="rbpi.icon"/>
+        {% autoescape off %}
+        <p>{{helloText}}</p>
+        {% endautoescape %}
+
+</div>
+    {% endblock %}
     {% block content %}{% endblock %}
     {% block end_content %}{% endblock %}
 </body>
+    <footer>
+    <br>
+    </footer>
 </html>

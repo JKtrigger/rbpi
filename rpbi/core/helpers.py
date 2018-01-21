@@ -27,7 +27,7 @@ def list_day_from_monday_till_friday():
     now_time = datetime.now()
     current_day_off_week = datetime.weekday(now_time)
     list_day = []
-    if current_day_off_week > FRIDAY:
+    if current_day_off_week >= FRIDAY:
         WEEK_LEN = 7
     for day_num in day_off_week:
         diff_day = timedelta(days=day_num - current_day_off_week + WEEK_LEN)

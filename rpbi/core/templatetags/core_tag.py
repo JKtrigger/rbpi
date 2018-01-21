@@ -38,7 +38,7 @@ def if_option_checked_return_one(value, args):
     args = args.split('_')
     if isinstance(value, dict):
         one = value.get(args[0], {}).get(args[1], None)
-        return 1 if one else 0
+        return 1 if one is not None else 0
 
 
 @register.filter(name='return_offices')
@@ -50,6 +50,9 @@ def return_offices(value_dict):
     return res
 
 
-@register.filter(name='pass')
-def pass_it(value ,arg):
-    pass
+@register.filter(name='in_list_disabled')
+def in_list_disabled(value, list_):
+    u"""
+    Проверить значение из списка и вернуть disabled, если в списке
+    """
+    return 'disabled' if value in list_ else ''

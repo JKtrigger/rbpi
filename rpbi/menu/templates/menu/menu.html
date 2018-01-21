@@ -6,8 +6,9 @@
 {% csrf_token %}
 {% load static %}
 {% load core_tag %}
-{% endblock %}
-{% block content %}
+<!--TODO: вынести в static , вынести в include-->
+<!--FIXME: убрать console -->
+<!--FIXME: переместить определение переменных на верх -->
 <script>
         $(document).ready(function(){
             /*
@@ -26,9 +27,12 @@
                     type : "POST",
                     data : data,
                     success : function(json) {
+
                         if (json.error){
-                            $("h4.modal-title").text("Some Error on Server");
-                            $("div.modal-body>p").text(
+                            var default_text = "Some Error on Server";
+                            $("h4.modal-title").text(
+                                json.head || default_text);
+                            $("div.modal-body>p").html(
                             json.error +"<br>"+json.details
                             )
 
@@ -43,6 +47,7 @@
 
                     },
                     error : function(xhr,errmsg,err) {
+
                         $("h4.modal-title").text("Request Error");
                             $("div.modal-body>p").text(
                                 xhr.status + ": " + xhr.responseText
@@ -57,20 +62,31 @@
             function validate(obj){
                 //obj - объект .col-sm-6
                 var findZeroObjects = obj.find('input[value="0"]');
+                var findOneObjects = obj.find('input[value="1"]');
                 var findSelectVal = obj.find('select').val()
                 /*
                     Если выбрана хоть одна опция в дне недели, но не выбранно
                     место, то это счиатается ошибка
 
                 */
+                if (findSelectVal && (
+                            findOneObjects.length || findZeroObjects.length==3)
+                    || !(findSelectVal) && (findOneObjects.length == 0)
 
-                if (findZeroObjects.length < 3 && findSelectVal ||
-                    findZeroObjects.length == 3
+
                 ){
                     <!-- correct -->
                 }
                 else{
-                    var name = $(findZeroObjects[0]).attr('name').split('_')[1]
+                    /* not correct */
+
+                    // TODO : вынести модалки в отдельный VIEW
+                    // TODO : вынести модалки в base.html
+                    var elem = findZeroObjects[0] || findOneObjects[0]
+
+                    if ($(elem).attr('name')){
+
+                    var name = $(elem).attr('name').split('_')[1]
 
                     $("h4.modal-title").text("Some Error on Page");
                     $("div.modal-body>p").text(
@@ -79,6 +95,7 @@
                         )
                     $('#myModal').modal('show');
                     return true
+                    }
                 }
             };
 
@@ -92,6 +109,7 @@
                 $(this).find('option[value="'+$(this).val()+'"]').attr(
                     {"selected":"selected"}
                 );
+
              });
 
             /*
@@ -114,28 +132,36 @@
             var selectorsCity = {{option|return_offices}}
             {% endautoescape %}
 
+
             var keysToUpdate = Object.keys(selectorsCity)
             var i = 0;
             for (i = 0; i < keysToUpdate.length; i++) {
                 var key = keysToUpdate[i];
                 var value = selectorsCity[
                     keysToUpdate[i]].replace('"','').replace('"','');
+                // обновление для пользователей (is_group==False)
                 var id = '#' + key
                 $(id).val(value)
+                // обновление для пользователей (is_group==True)
+                var group_id = '#group_' + key
+                $(group_id).val(value)
                 /*
                     Добавление аттрибута select
                 */
                 $(id).find('option').removeAttr('selected');
                 $(id).find('option[value="'+value+'"]').attr(
                     {'selected':'selected'});
+
+                $(group_id).find('option').removeAttr('selected');
+                $(group_id).find('option[value="'+value+'"]').attr(
+                    {'selected':'selected'});
             }
 
             /*
                 Обработка Submit
             */
-
-            $('.submitOn').click(function(){
-                var data_select = $('select[name], input[name]')
+            function submitOn(){
+                var data_select = $('select[name], input[name]');
 
                 // Валидация
                 var i = 0 ;
@@ -146,18 +172,113 @@
                     }
                 }
 
-                // TODO: Вынести в функцию
+
+                // TODO: Вынести в отдельную функцию
                 var result_data = {};
                 var i = 0 ;
                 for (i = 0; i < data_select.length; i++) {
                     var selector_obj = $(data_select[i]);
                     result_data[selector_obj.attr('name')]=selector_obj.val()
-                    url='/submit_order'
 
                 }
+                //TODO: передовать в контекс процессоре url
+                var user = "{{user}}";
+                result_data['user']=user;
+                url='/submit_order'
                 /* отправка сообщения */
                 send_ajax(result_data, url);
-            });
+            };
+
+            /* вещаем lister на submit */
+            $('.submitOn').click(submitOn);
+
+            {% if is_group %}
+                <!-- Переопределение функции submit -->
+                function submitOn() {
+                    var data_select = $('select[name], input[name]');
+                    var result_data = {};
+                    /* валидация */
+                        var i = 0 ;
+                        var div_col_sm = $('.col-sm-6');
+                        for (i = 0; i < div_col_sm.length-1; i++) {
+                            var object_with_data =  $(div_col_sm[i]);
+
+                            var findCountObjects = object_with_data.find(
+                                'input[value]');
+                            var findCountObjectsVal = findCountObjects.val();
+                            var findSelect = object_with_data.find(
+                                'select')
+                            var findSelectVal = findSelect.val();
+                            result_data[
+                                $($('select[name]')[i]
+                                    ).attr('name')
+                            ]=findSelectVal
+
+                            result_data[
+                                $($('input[name!="csrfmiddlewaretoken"]')[i]
+                                    ).attr('name')
+                            ]=findCountObjectsVal
+
+                            if (
+                                findCountObjectsVal == 0 &&
+                                !findSelectVal ||
+                                findSelectVal)
+                            {
+                                    /* correct */
+                            }
+                            else {
+                                /* not correct */
+                                var elem = $(findCountObjects[0])
+                                if ($(elem).attr('name')){
+                                    var name = $(elem).attr(
+                                        'name').split('_')[1]
+                                    $("h4.modal-title").text(
+                                        "Some Error on Page");
+                                    $("div.modal-body>p").text(
+                                        "It seems there is no " +
+                                        "place chosen for the order: "
+                                        +name
+                                    )
+                                     $('#myModal').modal('show');
+                                    return true
+                                }
+
+                            }
+                        }
+
+                    var user = "{{user}}";
+                    result_data['user']=user;
+                    url='/submit_order';
+                    /* отправка сообщения */
+
+                    send_ajax(result_data, url);
+                };
+
+                var group_data = JSON.parse('{{json_options|safe}}');
+                var disabled_dates = {{disabled_dates|safe}};
+
+                /* задать состояние группам обеда */
+                if (group_data) {
+                    var iter = 0 ;
+                    /* Количество */
+                    for (iter in group_data){
+                        var value_of_first = group_data[iter]['first']
+                        $('#group_input_'+iter).slider(
+                            'setValue',
+                            value_of_first,
+                            true
+                        );
+                    }
+                    /* активно или не активно */
+                if (disabled_dates){
+                    for (num in disabled_dates){
+                        $('#group_input_'+disabled_dates[num]
+                            ).slider('disable');
+                        }
+                    }
+                };
+
+            {% endif %}
 
             /*
                 добавление/удаление опций checked
@@ -177,17 +298,10 @@
         });
     </script>
 
+{% endblock %}
+{% block jumbotron %} {{ block.super }} {% endblock %}
 
-<div class="jumbotron text-center">
-  <h1>{{topText}}</h1>
-  <p>{{topTextUnderText}}</p>
-  <img src="{% static '/img/rbpi.ico' %}" align="rbpi.icon"/>
-    {% autoescape off %}
-    <p>{{helloText}}</p>
-    {% endautoescape %}
-
-</div>
-
+{% block content %}
 <div class="container">
     <div class="row">
         {% for day, simple_day in date_list %}
@@ -210,7 +324,8 @@
                     data-toggle="toggle"
                     data-height="40"
                     data-width="100"
-                    {{ disabled.disabled|default:"" }}
+                    {{ simple_day|in_list_disabled:disabled_dates}}
+                    {{ disabled.disabled|default:""}}
                     value={{option|if_option_checked_return_one:first}}
                     {% endwith %}
             />
@@ -227,6 +342,7 @@
                     data-toggle="toggle"
                     data-height="40"
                     data-width="100"
+                    {{ simple_day|in_list_disabled:disabled_dates}}
                     {{ disabled.disabled|default:""}}
                     value={{option|if_option_checked_return_one:second}}
                     {% endwith %}
@@ -245,6 +361,7 @@
                     data-toggle="toggle"
                     data-height="40"
                     data-width="100"
+                    {{ simple_day|in_list_disabled:disabled_dates}}
                     {{ disabled.disabled|default:""}}
                     value={{option|if_option_checked_return_one:salad}}
                    {% endwith %}
@@ -252,8 +369,11 @@
             </div>
             <div class="selectOption">
             <label>Select Office :</label>
-            <select class="form-control offices" {{ disabled.disabled|default:""}} id="{{ day|split_and_get_second:" " }}"
-                name="{{ day|split_and_get_second:" " }}"
+            <select class="form-control offices"
+                    {{ disabled.disabled|default:""}}
+                id="{{simple_day}}"
+                name="{{simple_day}}"
+                {{ simple_day|in_list_disabled:disabled_dates}}
                 >
                 <option disabled selected> -- select a lunch location -- </option>
                 {% for location in all_locations %}
@@ -262,7 +382,27 @@
             </select>
             </div>
         {% else %}
-            <input class="coolSlider"/>
+
+            <input
+                    name="count_{{simple_day}}"
+                    id="group_input_{{simple_day}}"
+                    class="coolSlider"
+
+            />
+            <div class="selectOption">
+            <label>Select Office :</label>
+            <select class="form-control offices"
+                    {{ disabled.disabled|default:""}}
+                id="group_{{simple_day}}"
+                name="group_{{simple_day}}"
+                {{ simple_day|in_list_disabled:disabled_dates}}
+                >
+                <option disabled selected> -- select a lunch location -- </option>
+                {% for location in all_locations %}
+                <option value="{{location}}">{{location}}</option>
+                {% endfor %}
+            </select>
+            </div>
         {% endif %}
         </div>
         {% endfor %}
@@ -301,6 +441,7 @@
 
 {% endblock %}
 {% block end_content %}
+<!--TODO: вынести в static, вынести в include -->
     <style>
         /* Кастомные стили для страници */
         abbr {

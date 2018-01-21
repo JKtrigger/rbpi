@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import yaml
+
+
+CELERY_BROKER_URL = 'amqp://localhost'
+CONFIG_FILE = os.environ['CONFIG_FILE']
+config = yaml.load(open(CONFIG_FILE, 'r'))
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,12 +27,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '98ailjg2*ar-$f&p*n4i_9iz8f&bw)*%bn$j%#ck64s56v&39q'
+SECRET_KEY = config['SECRET']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config['DEBUG']
 
-ALLOWED_HOSTS = ['172.20.10.11', '127.0.0.1', '192.168.0.101']
+ALLOWED_HOSTS = config['ALLOWED_HOSTS']
+
 # TODO: Просолка полей с паролем всетаки нужна
 # Application definition
 
@@ -41,6 +48,7 @@ INSTALLED_APPS = [
     # Добавление tags в DTL
     'core.templatetags',
     'menu',
+    'reports'
 ]
 
 MIDDLEWARE = [
@@ -78,8 +86,8 @@ AUTHENTICATION_BACKENDS = ('core.backend.SettingsBackend',)
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': config['DATABASE']['ENGINE'],
+        'NAME': os.path.join(BASE_DIR, config['DATABASE']['NAME']),
     }
 }
 
@@ -112,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = config['TIME_ZONE']
 
 USE_I18N = True
 
@@ -124,8 +132,34 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static_collect")
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+    )
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'MEDIA')
+MEDIA_URL = '/media/'
+
+
+# Email settings
+EMAIL_HOST = str(config['EMAIL_SETTINGS']['SERVER_IP'])
+VIEW_NAME = config['EMAIL_SETTINGS']['VIEW_NAME']
+EMAIL_HOST_USER = str(config['EMAIL_SETTINGS']['LOGIN'])
+VIEW_EMAIL = config['EMAIL_SETTINGS']['VIEW_EMAIL']
+EMAIL_HOST_PASSWORD = str(config['EMAIL_SETTINGS']['PASSWORD'])
+EMAIL_PORT = int(config['EMAIL_SETTINGS']['PORT'])
+EMAIL_USE_TLS = True
+
+SERVER_IP = EMAIL_HOST
+LOGIN = EMAIL_HOST_USER
+PASSWORD = EMAIL_HOST_PASSWORD
+PORT = EMAIL_PORT
+
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+)
+
+
